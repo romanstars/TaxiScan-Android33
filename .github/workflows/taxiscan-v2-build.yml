@@ -16,9 +16,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
       - name: Install Android SDK 36
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+        run: |
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          yes | sdkmanager --licenses
+          sdkmanager --install 'platforms;android-36' 'build-tools;36.0.0'
       - name: Build debug APK
         working-directory: TaxiScan_Improved_Project
         run: ./gradlew assembleDebug
