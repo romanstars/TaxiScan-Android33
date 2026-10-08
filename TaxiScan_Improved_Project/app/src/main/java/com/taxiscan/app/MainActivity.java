@@ -56,17 +56,8 @@ public class MainActivity extends Activity {
         scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false); scroll.setBackgroundColor(bg);
         LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setPadding(dp(17),dp(12),dp(17),dp(18)); page.setBackgroundColor(bg); scroll.addView(page,new ScrollView.LayoutParams(-1,-2));
 
-        ImageView hero=new ImageView(this);
-        hero.setImageResource(R.drawable.taxianalytic_home);
-        hero.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        hero.setBackgroundColor(bg);
-        hero.setContentDescription("TaxiAnalytic — автомобіль і зростання заробітку");
-        LinearLayout.LayoutParams heroLp=new LinearLayout.LayoutParams(-1,dp(300));
-        heroLp.bottomMargin=dp(8);
-        page.addView(hero,heroLp);
-
         LinearLayout brandRow=new LinearLayout(this); brandRow.setGravity(Gravity.CENTER_VERTICAL); page.addView(brandRow,margin(0,0,0,12));
-        ImageView logo=new ImageView(this); logo.setImageResource(R.drawable.ic_taxianalytic_brand); logo.setPadding(dp(2),dp(2),dp(2),dp(2)); brandRow.addView(logo,new LinearLayout.LayoutParams(dp(62),dp(62)));
+        ImageView logo=new ImageView(this); logo.setImageResource(R.drawable.taxianalytic_home); logo.setPadding(dp(2),dp(2),dp(2),dp(2)); brandRow.addView(logo,new LinearLayout.LayoutParams(dp(62),dp(62)));
         LinearLayout brandCopy=new LinearLayout(this); brandCopy.setOrientation(LinearLayout.VERTICAL); brandCopy.setPadding(dp(7),0,0,0); brandRow.addView(brandCopy,new LinearLayout.LayoutParams(0,-2,1));
         brandCopy.addView(text("TaxiAnalytic",23,white,true)); brandCopy.addView(text("АНАЛІТИКА ПОЇЗДОК",10,green,true),margin(0,1,0,0));
         TextView profile=iconButton("♙"); brandRow.addView(profile,new LinearLayout.LayoutParams(dp(42),dp(42))); profile.setOnClickListener(v->openSettings());
