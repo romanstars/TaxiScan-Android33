@@ -129,7 +129,7 @@ public class PermissionSetupActivity extends Activity {
     private double safe(String s,double d){try{return Double.parseDouble(s.trim().replace(',','.'));}catch(Exception ignored){return d;}}
     private void toggleSound(){boolean next=!features().getBoolean("sound_enabled",false);features().edit().putBoolean("sound_enabled",next).apply();LocalEventLog.add(this,next?"Звуковий сигнал увімкнено":"Звуковий сигнал вимкнено");refreshStatuses();Toast.makeText(this,next?"Сигнал нової пропозиції увімкнено":"Сигнал вимкнено",Toast.LENGTH_SHORT).show();}
     private void showInfo(){
-        JSONArray trips=new JSONArray(getSharedPreferences("taxiscan_local",MODE_PRIVATE).getString("trips","[]"));int today=0;long day=System.currentTimeMillis()/86400000L;double net=0;
+        JSONArray trips;try{trips=new JSONArray(getSharedPreferences("taxiscan_local",MODE_PRIVATE).getString("trips","[]"));}catch(Exception ignored){trips=new JSONArray();}int today=0;long day=System.currentTimeMillis()/86400000L;double net=0;
         for(int i=0;i<trips.length();i++){JSONObject x=trips.optJSONObject(i);if(x!=null&&x.optLong("time",0)/86400000L==day){today++;net+=x.optDouble("net",0);}}
         String s="Версія 2.2.0\nЗбережено поїздок: "+trips.length()+"\nСьогодні: "+today+" · чистими ₴ "+String.format(java.util.Locale.getDefault(),"%.2f",net)+"\n\nОбробка пропозицій відбувається на пристрої. Текст замовлень не додається до логів.";
         new AlertDialog.Builder(this).setTitle("TaxiScan · інформація").setMessage(s).setPositiveButton("Готово",null).setNeutralButton("Відкрити калькулятор",(d,w)->finish()).show();
