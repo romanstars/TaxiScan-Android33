@@ -7,7 +7,7 @@ android {
         applicationId = "com.romanstars.taxianalytic"
         minSdk = 21
         targetSdk = 36
-        versionCode = 37
-        versionName = "2.2.3"
+        versionCode = 38
+        versionName = "2.2.4"
     }
 }

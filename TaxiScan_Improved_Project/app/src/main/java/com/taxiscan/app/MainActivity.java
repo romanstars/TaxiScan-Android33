@@ -38,6 +38,7 @@ public class MainActivity extends Activity {
     private TextView netValue, breakdown, todayValue, todayKmValue, todayTripsValue, avgRateValue, dailyDelta, orderStatus, history, scanState;
     private EarningsChart earningsChart;
     private ScrollView scroll;
+    private LinearLayout dashboardTab, analyticsTab, historyTab;
     private View analyticsAnchor, historyAnchor;
     private TripCalculator.Result lastResult;
     private NumberFormat money;
@@ -53,75 +54,82 @@ public class MainActivity extends Activity {
 
     private void buildScreen() {
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(bg);
-        scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setClipToPadding(false); scroll.setBackgroundColor(bg);
-        LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setPadding(dp(17),dp(12),dp(17),dp(18)); page.setBackgroundColor(bg); scroll.addView(page,new ScrollView.LayoutParams(-1,-2));
+        scroll=new ScrollView(this); scroll.setFillViewport(true); scroll.setClipToPadding(false); scroll.setBackgroundColor(bg);
+        LinearLayout page=new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setPadding(dp(14),dp(8),dp(14),dp(10)); page.setBackgroundColor(bg); scroll.addView(page,new ScrollView.LayoutParams(-1,-1));
+        dashboardTab=new LinearLayout(this); dashboardTab.setOrientation(LinearLayout.VERTICAL); dashboardTab.setGravity(Gravity.CENTER_VERTICAL); page.addView(dashboardTab,new LinearLayout.LayoutParams(-1,0,1));
+        analyticsTab=new LinearLayout(this); analyticsTab.setOrientation(LinearLayout.VERTICAL); analyticsTab.setGravity(Gravity.TOP); analyticsTab.setVisibility(View.GONE); page.addView(analyticsTab,new LinearLayout.LayoutParams(-1,0,1));
+        historyTab=new LinearLayout(this); historyTab.setOrientation(LinearLayout.VERTICAL); historyTab.setGravity(Gravity.TOP); historyTab.setVisibility(View.GONE); page.addView(historyTab,new LinearLayout.LayoutParams(-1,0,1));
 
-        LinearLayout brandRow=new LinearLayout(this); brandRow.setGravity(Gravity.CENTER_VERTICAL); page.addView(brandRow,margin(0,0,0,12));
-        ImageView logo=new ImageView(this); logo.setImageResource(R.drawable.taxianalytic_home); logo.setPadding(dp(2),dp(2),dp(2),dp(2)); brandRow.addView(logo,new LinearLayout.LayoutParams(dp(62),dp(62)));
+        LinearLayout brandRow=new LinearLayout(this); brandRow.setGravity(Gravity.CENTER_VERTICAL); dashboardTab.addView(brandRow,margin(0,0,0,8));
+        ImageView logo=new ImageView(this); logo.setImageResource(R.drawable.taxianalytic_home); logo.setPadding(dp(2),dp(2),dp(2),dp(2)); brandRow.addView(logo,new LinearLayout.LayoutParams(dp(46),dp(46)));
         LinearLayout brandCopy=new LinearLayout(this); brandCopy.setOrientation(LinearLayout.VERTICAL); brandCopy.setPadding(dp(7),0,0,0); brandRow.addView(brandCopy,new LinearLayout.LayoutParams(0,-2,1));
-        brandCopy.addView(text("TaxiAnalytic",23,white,true)); brandCopy.addView(text("АНАЛІТИКА ПОЇЗДОК",10,green,true),margin(0,1,0,0));
-        TextView profile=iconButton("♙"); brandRow.addView(profile,new LinearLayout.LayoutParams(dp(42),dp(42))); profile.setOnClickListener(v->openSettings());
-        TextView settings=iconButton("⚙"); LinearLayout.LayoutParams gearLp=new LinearLayout.LayoutParams(dp(42),dp(42)); gearLp.setMargins(dp(7),0,0,0); brandRow.addView(settings,gearLp); settings.setOnClickListener(v->openSettings());
+        brandCopy.addView(text("TaxiAnalytic",20,white,true));
+        scanState=text("АНАЛІЗ УВІМКНЕНО",10,green,true); scanState.setPadding(dp(8),dp(4),dp(8),dp(4)); scanState.setBackground(round(Color.rgb(9,34,25),dp(18),Color.rgb(0,111,73),dp(1)));
+        LinearLayout.LayoutParams scanLp=new LinearLayout.LayoutParams(-2,-2); scanLp.topMargin=dp(3); brandCopy.addView(scanState,scanLp); scanState.setOnClickListener(v->openSettings());
+        TextView profile=iconButton("♙"); brandRow.addView(profile,new LinearLayout.LayoutParams(dp(38),dp(38))); profile.setOnClickListener(v->openSettings());
+        TextView settings=iconButton("⚙"); LinearLayout.LayoutParams gearLp=new LinearLayout.LayoutParams(dp(38),dp(38)); gearLp.setMargins(dp(6),0,0,0); brandRow.addView(settings,gearLp); settings.setOnClickListener(v->openSettings());
 
-        LinearLayout status=card(); status.setOrientation(LinearLayout.HORIZONTAL); status.setGravity(Gravity.CENTER_VERTICAL); status.setPadding(dp(14),dp(10),dp(13),dp(10)); status.setBackground(round(Color.rgb(9,34,25),dp(24),Color.rgb(0,111,73),dp(1))); page.addView(status,margin(0,0,0,13));
-        TextView dot=text("●",16,green,true); status.addView(dot,new LinearLayout.LayoutParams(dp(26),-2));
-        scanState=text("ПІДКЛЮЧЕННЯ АНАЛІЗУ",14,green,true); status.addView(scanState,new LinearLayout.LayoutParams(0,-2,1));
-        TextView chevron=text("›",27,green,true); chevron.setGravity(Gravity.CENTER); status.addView(chevron,new LinearLayout.LayoutParams(dp(24),-2)); status.setOnClickListener(v->openSettings());
-
-        LinearLayout earnings=card(); earnings.setPadding(dp(17),dp(16),dp(17),dp(13)); page.addView(earnings,margin(0,0,0,11));
+        LinearLayout earnings=card(); earnings.setPadding(dp(12),dp(10),dp(12),dp(9)); dashboardTab.addView(earnings,margin(0,0,0,8));
         LinearLayout earningsHeading=new LinearLayout(this); earningsHeading.setGravity(Gravity.CENTER_VERTICAL); earnings.addView(earningsHeading,new LinearLayout.LayoutParams(-1,-2));
-        TextView earningsTitle=text("ЗАРОБІТОК СЬОГОДНІ",13,muted,true); earningsHeading.addView(earningsTitle,new LinearLayout.LayoutParams(0,-2,1)); earningsHeading.addView(text("›",27,muted,true));
-        todayValue=text("₴ 0,00",38,white,true); earnings.addView(todayValue,margin(0,5,0,0));
+        TextView earningsTitle=text("ЗАРОБІТОК СЬОГОДНІ",11,muted,true); earningsHeading.addView(earningsTitle,new LinearLayout.LayoutParams(0,-2,1)); earningsHeading.addView(text("›",27,muted,true));
+        todayValue=text("₴ 0,00",31,white,true); earnings.addView(todayValue,margin(0,1,0,0));
         LinearLayout deltaRow=new LinearLayout(this); deltaRow.setGravity(Gravity.CENTER_VERTICAL); earnings.addView(deltaRow,margin(0,1,0,1));
-        dailyDelta=text("↗  За збереженими поїздками",14,green,true); deltaRow.addView(dailyDelta);
-        earningsChart=new EarningsChart(this); earnings.addView(earningsChart,new LinearLayout.LayoutParams(-1,dp(116)));
+        dailyDelta=text("↗  За збереженими поїздками",12,green,true); deltaRow.addView(dailyDelta);
+        earningsChart=new EarningsChart(this); earnings.addView(earningsChart,new LinearLayout.LayoutParams(-1,dp(78)));
         LinearLayout times=new LinearLayout(this); times.setGravity(Gravity.CENTER_VERTICAL); earnings.addView(times,new LinearLayout.LayoutParams(-1,-2));
-        String[] labels={"00:00","06:00","12:00","18:00","24:00"}; for(String label:labels){TextView t=text(label,10,muted,false);t.setGravity(Gravity.CENTER);times.addView(t,new LinearLayout.LayoutParams(0,-2,1));}
+        String[] labels={"00:00","06:00","12:00","18:00","24:00"}; for(String label:labels){TextView t=text(label,9,muted,false);t.setGravity(Gravity.CENTER);times.addView(t,new LinearLayout.LayoutParams(0,-2,1));}
 
-        LinearLayout stats=new LinearLayout(this); stats.setOrientation(LinearLayout.HORIZONTAL); page.addView(stats,margin(0,0,0,11));
+        LinearLayout stats=new LinearLayout(this); stats.setOrientation(LinearLayout.HORIZONTAL); dashboardTab.addView(stats,margin(0,0,0,8));
         LinearLayout rateCard=card(); stats.addView(rateCard,new LinearLayout.LayoutParams(0,-2,1));
-        rateCard.addView(text("СЕРЕДНЯ СТАВКА",11,muted,true)); avgRateValue=text("₴ 0,00 /км",19,white,true); rateCard.addView(avgRateValue,margin(0,6,0,0)); todayKmValue=text("0,0 км за день",11,muted,false); rateCard.addView(todayKmValue,margin(0,2,0,0));
+        rateCard.addView(text("СЕРЕДНЯ СТАВКА",10,muted,true)); avgRateValue=text("₴ 0,00 /км",17,white,true); rateCard.addView(avgRateValue,margin(0,6,0,0)); todayKmValue=text("0,0 км за день",9,muted,false); rateCard.addView(todayKmValue,margin(0,2,0,0));
         LinearLayout tripsCard=card(); LinearLayout.LayoutParams tripsLp=new LinearLayout.LayoutParams(0,-2,1); tripsLp.setMargins(dp(9),0,0,0); stats.addView(tripsCard,tripsLp);
-        tripsCard.addView(text("ПОЇЗДКИ",11,muted,true)); todayTripsValue=text("0",22,white,true); tripsCard.addView(todayTripsValue,margin(0,5,0,0));
+        tripsCard.addView(text("ПОЇЗДКИ",10,muted,true)); todayTripsValue=text("0",20,white,true); tripsCard.addView(todayTripsValue,margin(0,5,0,0));
 
-        analyticsAnchor=new View(this); page.addView(analyticsAnchor,new LinearLayout.LayoutParams(1,dp(1)));
-        LinearLayout order=card(); order.setPadding(dp(15),dp(15),dp(15),dp(15)); order.setBackground(round(panel,dp(20),Color.rgb(0,104,71),dp(1))); page.addView(order,margin(0,0,0,11));
+        analyticsAnchor=new View(this); dashboardTab.addView(analyticsAnchor,new LinearLayout.LayoutParams(1,dp(1)));
+        LinearLayout order=card(); order.setPadding(dp(11),dp(10),dp(11),dp(10)); order.setBackground(round(panel,dp(20),Color.rgb(0,104,71),dp(1))); dashboardTab.addView(order,margin(0,0,0,8));
         LinearLayout orderTitleRow=new LinearLayout(this); orderTitleRow.setGravity(Gravity.CENTER_VERTICAL); order.addView(orderTitleRow,new LinearLayout.LayoutParams(-1,-2));
-        TextView orderTitle=text("АНАЛІЗ ЗАМОВЛЕННЯ",13,muted,true); orderTitleRow.addView(orderTitle,new LinearLayout.LayoutParams(0,-2,1));
-        orderStatus=text("ВВЕДИ ДАНІ",10,muted,true); orderStatus.setPadding(dp(9),dp(6),dp(9),dp(6)); orderStatus.setBackground(round(Color.rgb(28,33,35),dp(18),line,dp(1))); orderTitleRow.addView(orderStatus);
-        LinearLayout fieldsRow=new LinearLayout(this); fieldsRow.setOrientation(LinearLayout.HORIZONTAL); fieldsRow.setGravity(Gravity.TOP); order.addView(fieldsRow,margin(0,12,0,2));
+        TextView orderTitle=text("АНАЛІЗ ЗАМОВЛЕННЯ",11,muted,true); orderTitleRow.addView(orderTitle,new LinearLayout.LayoutParams(0,-2,1));
+        orderStatus=text("ВВЕДИ ДАНІ",10,muted,true); orderStatus.setPadding(dp(8),dp(4),dp(8),dp(4)); orderStatus.setBackground(round(Color.rgb(28,33,35),dp(18),line,dp(1))); orderTitleRow.addView(orderStatus);
+        LinearLayout fieldsRow=new LinearLayout(this); fieldsRow.setOrientation(LinearLayout.HORIZONTAL); fieldsRow.setGravity(Gravity.TOP); order.addView(fieldsRow,margin(0,7,0,0));
         LinearLayout fareCol=new LinearLayout(this); fareCol.setOrientation(LinearLayout.VERTICAL); fieldsRow.addView(fareCol,new LinearLayout.LayoutParams(0,-2,1));
-        fare=field(fareCol,"Оплата, ₴","0");
+        fare=compactField(fareCol,"Оплата, ₴","0");
         LinearLayout kmCol=new LinearLayout(this); kmCol.setOrientation(LinearLayout.VERTICAL); LinearLayout.LayoutParams kmColLp=new LinearLayout.LayoutParams(0,-2,1); kmColLp.setMargins(dp(8),0,0,0); fieldsRow.addView(kmCol,kmColLp);
-        rideKm=field(kmCol,"З пасажиром, км","0");
+        rideKm=compactField(kmCol,"З пасажиром, км","0");
         LinearLayout pickupCol=new LinearLayout(this); pickupCol.setOrientation(LinearLayout.VERTICAL); LinearLayout.LayoutParams pickupLp=new LinearLayout.LayoutParams(0,-2,1); pickupLp.setMargins(dp(8),0,0,0); fieldsRow.addView(pickupCol,pickupLp);
-        pickupKm=field(pickupCol,"Подача, км","0");
-        TextView orderOutputLabel=text("ЧИСТИМИ ПІСЛЯ ВИТРАТ",11,muted,true); order.addView(orderOutputLabel,margin(0,9,0,0));
-        netValue=text("₴ 0,00",26,white,true); order.addView(netValue,margin(0,3,0,0));
-        breakdown=text("Вкажи суму й кілометраж та натисни «Перевірити».",12,muted,false); breakdown.setLineSpacing(dp(2),1f); order.addView(breakdown,margin(0,3,0,0));
-        Button calculate=button("ПЕРЕВІРИТИ  ›",yellow,Color.rgb(18,18,18)); order.addView(calculate,margin(0,12,0,0)); calculate.setOnClickListener(v->calculate());
-        Button save=button("ЗБЕРЕГТИ ПОЇЗДКУ",panel,green); save.setBackground(round(panel,dp(15),Color.rgb(0,117,76),dp(1))); order.addView(save,margin(0,8,0,0)); save.setOnClickListener(v->saveTrip());
+        pickupKm=compactField(pickupCol,"Подача, км","0");
+        TextView orderOutputLabel=text("ЧИСТИМИ ПІСЛЯ ВИТРАТ",9,muted,true); order.addView(orderOutputLabel,margin(0,4,0,0));
+        netValue=text("₴ 0,00",22,white,true); order.addView(netValue,margin(0,1,0,0));
+        breakdown=text("Вкажи суму й кілометраж та натисни «Перевірити».",10,muted,false); breakdown.setMaxLines(2); breakdown.setLineSpacing(dp(1),1f); order.addView(breakdown,margin(0,1,0,0));
+        LinearLayout actions=new LinearLayout(this); actions.setOrientation(LinearLayout.HORIZONTAL); order.addView(actions,margin(0,7,0,0));
+        Button calculate=button("ПЕРЕВІРИТИ",yellow,Color.rgb(18,18,18)); actions.addView(calculate,new LinearLayout.LayoutParams(0,dp(40),1)); calculate.setOnClickListener(v->calculate());
+        Button save=button("ЗБЕРЕГТИ",panel,green); save.setTextSize(12); save.setBackground(round(panel,dp(12),Color.rgb(0,117,76),dp(1))); LinearLayout.LayoutParams saveLp=new LinearLayout.LayoutParams(0,dp(40),1); saveLp.setMargins(dp(7),0,0,0); actions.addView(save,saveLp); save.setOnClickListener(v->saveTrip());
 
-        section(page,"Витрати автомобіля","КОМІСІЯ ТА СОБІВАРТІСТЬ");
-        LinearLayout costForm=card(); page.addView(costForm,margin(0,0,0,11));
+        section(analyticsTab,"Витрати автомобіля","КОМІСІЯ ТА СОБІВАРТІСТЬ");
+        LinearLayout costForm=card(); analyticsTab.addView(costForm,margin(0,0,0,11));
         commission=field(costForm,"Комісія сервісу, %","15"); fuelUse=field(costForm,"Витрата пального, л / 100 км","8"); fuelPrice=field(costForm,"Ціна пального, ₴ / л","95"); wear=field(costForm,"Амортизація, ₴ / км","1.50");
 
-        historyAnchor=new View(this); page.addView(historyAnchor,new LinearLayout.LayoutParams(1,dp(1)));
-        section(page,"Історія поїздок","ОСТАННІ ЗБЕРЕЖЕНІ РОЗРАХУНКИ");
-        LinearLayout historyCard=card(); page.addView(historyCard,margin(0,0,0,8)); history=text("Збережені поїздки з'являться тут.",13,muted,false); history.setLineSpacing(dp(4),1f); historyCard.addView(history);
+        historyAnchor=new View(this); historyTab.addView(historyAnchor,new LinearLayout.LayoutParams(1,dp(1)));
+        section(historyTab,"Історія поїздок","ОСТАННІ ЗБЕРЕЖЕНІ РОЗРАХУНКИ");
+        LinearLayout historyCard=card(); historyTab.addView(historyCard,margin(0,0,0,8)); history=text("Збережені поїздки з'являться тут.",13,muted,false); history.setLineSpacing(dp(4),1f); historyCard.addView(history);
 
         root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        root.addView(bottomNavigation(),new LinearLayout.LayoutParams(-1,dp(62)));
+        root.addView(bottomNavigation(),new LinearLayout.LayoutParams(-1,dp(56)));
         setContentView(root);
     }
 
     private LinearLayout bottomNavigation(){
         LinearLayout bar=new LinearLayout(this);bar.setGravity(Gravity.CENTER_VERTICAL);bar.setBackgroundColor(Color.rgb(16,18,20));
-        TextView home=navItem("⌂","Головна",true);bar.addView(home,new LinearLayout.LayoutParams(0,-1,1));home.setOnClickListener(v->{scroll.smoothScrollTo(0,0);selectNav(bar,home);});
-        TextView analytics=navItem("▥","Аналітика",false);bar.addView(analytics,new LinearLayout.LayoutParams(0,-1,1));analytics.setOnClickListener(v->{scroll.smoothScrollTo(0,analyticsAnchor.getTop());selectNav(bar,analytics);});
-        TextView trips=navItem("◷","Історія",false);bar.addView(trips,new LinearLayout.LayoutParams(0,-1,1));trips.setOnClickListener(v->{scroll.smoothScrollTo(0,historyAnchor.getTop());selectNav(bar,trips);});
+        TextView home=navItem("⌂","Головна",true);bar.addView(home,new LinearLayout.LayoutParams(0,-1,1));home.setOnClickListener(v->{showTab(0);selectNav(bar,home);});
+        TextView analytics=navItem("▥","Аналітика",false);bar.addView(analytics,new LinearLayout.LayoutParams(0,-1,1));analytics.setOnClickListener(v->{showTab(1);selectNav(bar,analytics);});
+        TextView trips=navItem("◷","Історія",false);bar.addView(trips,new LinearLayout.LayoutParams(0,-1,1));trips.setOnClickListener(v->{showTab(2);selectNav(bar,trips);});
         TextView profile=navItem("♙","Профіль",false);bar.addView(profile,new LinearLayout.LayoutParams(0,-1,1));profile.setOnClickListener(v->openSettings());
         return bar;
+    }
+    private void showTab(int tab){
+        dashboardTab.setVisibility(tab==0?View.VISIBLE:View.GONE);
+        analyticsTab.setVisibility(tab==1?View.VISIBLE:View.GONE);
+        historyTab.setVisibility(tab==2?View.VISIBLE:View.GONE);
+        scroll.smoothScrollTo(0,0);
     }
     private TextView navItem(String icon,String label,boolean selected){TextView t=text(icon+"\n"+label,11,selected?yellow:muted,selected);t.setGravity(Gravity.CENTER);t.setLineSpacing(0,0.9f);return t;}
     private void selectNav(LinearLayout bar,TextView selected){for(int i=0;i<bar.getChildCount();i++){TextView item=(TextView)bar.getChildAt(i);item.setTextColor(item==selected?yellow:muted);item.setTypeface(Typeface.DEFAULT,item==selected?Typeface.BOLD:Typeface.NORMAL);}}
@@ -131,9 +139,13 @@ public class MainActivity extends Activity {
         TextView title=text(label,11,muted,true);parent.addView(title,margin(0,0,0,5));
         EditText input=new EditText(this);input.setSingleLine(true);input.setTextSize(15);input.setTextColor(white);input.setHintTextColor(Color.rgb(105,113,118));input.setHint(hint);input.setPadding(dp(11),dp(8),dp(8),dp(8));input.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED);input.setBackground(round(Color.rgb(11,13,14),dp(11),line,dp(1)));parent.addView(input,new LinearLayout.LayoutParams(-1,dp(46)));return input;
     }
+    private EditText compactField(LinearLayout parent,String label,String hint){
+        TextView title=text(label,9,muted,true); title.setMaxLines(2); parent.addView(title,margin(0,0,0,3));
+        EditText input=new EditText(this); input.setSingleLine(true); input.setTextSize(13); input.setTextColor(white); input.setHintTextColor(Color.rgb(105,113,118)); input.setHint(hint); input.setPadding(dp(8),dp(4),dp(6),dp(4)); input.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL|InputType.TYPE_NUMBER_FLAG_SIGNED); input.setBackground(round(Color.rgb(11,13,14),dp(9),line,dp(1))); parent.addView(input,new LinearLayout.LayoutParams(-1,dp(36))); return input;
+    }
     private void section(LinearLayout p,String title,String caption){LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.VERTICAL);p.addView(row,margin(0,12,0,7));row.addView(text(title,18,white,true));row.addView(text(caption,10,green,true),margin(0,2,0,0));}
-    private LinearLayout card(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(dp(14),dp(13),dp(14),dp(13));l.setBackground(round(panel,dp(18),line,dp(1)));return l;}
-    private Button button(String label,int color,int textColor){Button b=new Button(this);b.setText(label);b.setTextColor(textColor);b.setTextSize(15);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);b.setAllCaps(false);b.setBackground(round(color,dp(15),Color.TRANSPARENT,0));b.setMinHeight(dp(50));b.setElevation(dp(1));return b;}
+    private LinearLayout card(){LinearLayout l=new LinearLayout(this);l.setOrientation(LinearLayout.VERTICAL);l.setPadding(dp(11),dp(9),dp(11),dp(9));l.setBackground(round(panel,dp(18),line,dp(1)));return l;}
+    private Button button(String label,int color,int textColor){Button b=new Button(this);b.setText(label);b.setTextColor(textColor);b.setTextSize(15);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);b.setAllCaps(false);b.setBackground(round(color,dp(15),Color.TRANSPARENT,0));b.setMinHeight(dp(40));b.setElevation(dp(1));return b;}
     private TextView iconButton(String icon){TextView t=text(icon,20,white,true);t.setGravity(Gravity.CENTER);t.setBackground(round(panel,dp(30),line,dp(1)));t.setContentDescription("Відкрити налаштування TaxiAnalytic");return t;}
     private TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);return t;}
     private GradientDrawable round(int color,int radius,int stroke,int width){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(radius);if(width>0)d.setStroke(width,stroke);return d;}
