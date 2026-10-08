@@ -40,7 +40,9 @@ public class MainActivity extends Activity {
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true);
         LinearLayout page = new LinearLayout(this); page.setOrientation(LinearLayout.VERTICAL); page.setPadding(dp(20),dp(16),dp(20),dp(32)); page.setBackgroundColor(bg); scroll.addView(page);
         TextView brand = text("TaxiScan", 28, white, true); page.addView(brand);
-        TextView subtitle = text("Порахуй реальний прибуток поїздки", 14, muted, false); page.addView(subtitle, margin(0,2,0,18));
+        TextView subtitle = text("Порахуй реальний прибуток поїздки", 14, muted, false); page.addView(subtitle, margin(0,2,0,12));
+        Button connect = button("Підключити Bolt / Uklon", green, Color.rgb(8,24,21)); page.addView(connect, margin(0,0,0,16));
+        connect.setOnClickListener(v -> startActivity(new android.content.Intent(this, PermissionSetupActivity.class)));
 
         LinearLayout profit = card(); page.addView(profit, margin(0,0,0,14));
         profit.addView(text("ЧИСТИЙ ЗАРОБІТОК",12,muted,true));
