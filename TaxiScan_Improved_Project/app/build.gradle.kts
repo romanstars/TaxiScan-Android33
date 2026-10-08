@@ -7,7 +7,7 @@ android {
         applicationId = "com.example.myno.activity"
         minSdk = 21
         targetSdk = 36
-        versionCode = 33
-        versionName = "2.1.0"
+        versionCode = 34
+        versionName = "2.2.0"
     }
 }

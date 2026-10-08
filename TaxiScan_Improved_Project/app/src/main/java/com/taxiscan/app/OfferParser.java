@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import android.content.Context;
 
 /** Extracts only a fare and kilometre values from visible ride-offer text. */
 public final class OfferParser {
@@ -30,6 +31,21 @@ public final class OfferParser {
         for (double d : distances) total += d;
         return String.format(new Locale("uk", "UA"), "Замовлення · ₴ %.0f · %.1f км", fare, total);
     }
+
+    /** Adds a local pass/attention hint; it never accepts or rejects the ride. */
+    public static String withFilter(Context context, String summary) {
+        if (summary == null) return null;
+        Matcher m = Pattern.compile("₴\\s*([0-9]+(?:[.,][0-9]+)?).*?([0-9]+(?:[.,][0-9]+)?)\\s*км").matcher(summary);
+        if (!m.find()) return summary;
+        Double fare=number(m.group(1)), km=number(m.group(2));
+        if(fare==null||km==null||km<=0)return summary;
+        android.content.SharedPreferences p=context.getSharedPreferences("taxiscan_features",Context.MODE_PRIVATE);
+        double minFare=parse(p.getString("filter_min_fare","80"),80), minRate=parse(p.getString("filter_min_rate","8"),8), maxKm=parse(p.getString("filter_max_km","40"),40);
+        boolean passes=fare>=minFare && fare/km>=minRate && km<=maxKm;
+        return summary+(passes?" · ФІЛЬТР ✓":" · ПЕРЕВІР УМОВИ");
+    }
+
+    private static double parse(String s,double fallback){try{return Double.parseDouble(s.trim().replace(',','.'));}catch(Exception ignored){return fallback;}}
 
     private static Double number(String raw) {
         try {

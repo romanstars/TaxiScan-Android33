@@ -2,6 +2,8 @@ package com.taxiscan.app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.os.CountDownTimer;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,21 +15,31 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Map;
 
 /** Consent-first hub for the system access needed by optional offer scanning. */
 public class PermissionSetupActivity extends Activity {
     private static final int ACCESSIBILITY=1, RESET=2, BATTERY=3, OVERLAY=4, NOTIFICATIONS=5, LOCATION=6, LISTENER=7, AUTOSTART=8, APP_SETTINGS=9;
+    private static final int EXPORT_BACKUP=201, IMPORT_BACKUP=202;
     private final int bg=Color.rgb(15,18,18), card=Color.rgb(18,43,29), green=Color.rgb(84,184,91), blue=Color.rgb(35,153,218), white=Color.WHITE, muted=Color.rgb(185,200,187);
     private final ArrayList<CardRef> cards=new ArrayList<>();
     private LinearLayout page;
+    private CountDownTimer activeTimer;
 
     @Override protected void onCreate(Bundle state){super.onCreate(state);getWindow().setStatusBarColor(bg);getWindow().setNavigationBarColor(Color.WHITE);getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);build();}
     @Override protected void onResume(){super.onResume();refreshStatuses();}
@@ -50,6 +62,22 @@ public class PermissionSetupActivity extends Activity {
         addCard(LISTENER,"Доступ до сповіщень","Необов'язковий аналіз сповіщень Bolt/Uklon",green,()->openNotificationListenerSettings());
         addCard(AUTOSTART,"Автозапуск у фоні","Для Xiaomi/MIUI увімкни автозапуск вручну в системних налаштуваннях",blue,()->openAutostartSettings());
         addCard(APP_SETTINGS,"Відкрити налаштування програми","Додаткові дозволи та параметри TaxiScan",blue,()->openAppDetails());
+        TextView toolsLabel=text("Функції TaxiScan",18,white,true);page.addView(toolsLabel,lp(2,10,0,7));
+        addCard(10,"Робота з Bolt / Uklon","Увімкнути або призупинити аналіз пропозицій",green,()->toggleScanning());
+        addCard(11,"Фільтр пропозицій","Мінімальна сума, ціна за км та гранична відстань",green,()->editOfferFilter());
+        addCard(12,"Ціна кілометра авто","Витрата пального, його ціна та амортизація",blue,()->editVehicleCosts());
+        addCard(13,"Налаштування звуку","Сигнал при появі нової пропозиції",green,()->toggleSound());
+        addCard(14,"Інформація та статистика","Локальна статистика та швидкі дії",blue,()->showInfo());
+        addCard(15,"Налаштування плаваючого вікна","Розмір тексту, прозорість і вертикальне розташування",blue,()->editOverlay());
+        addCard(16,"Таймери поїздки","Прийняття, зустріч, очікування та загальний час",blue,()->showTimers());
+        addCard(17,"Резервна копія налаштувань","Експорт або відновлення на телефоні",blue,()->showBackup());
+        addCard(18,"Оновлення програми","Відкрити сторінку проєкту та перевірити релізи",blue,()->openUpdates());
+        addCard(19,"AI Assistant — прогноз часу","Розрахунок часу з ручним запасом на затори",green,()->showTripForecast());
+        addCard(20,"Запустити Bolt","Відкрити застосунок водія, якщо він встановлений",green,()->launchBolt());
+        addCard(21,"Налаштування плаваючих кнопок","Керування розміром, позицією та прозорістю картки",blue,()->editOverlay());
+        addCard(22,"Логи програми","Локальні службові події без тексту замовлень",blue,()->showLogs());
+        addCard(23,"Авто кліки","Сценарії збережені як вимкнена опція; жести не виконуються",blue,()->showNoAutomation("Авто кліки вимкнені. TaxiScan не виконує натискань або жестів у Bolt/Uklon."));
+        addCard(24,"Bolt автоприйом попередніх","Підказки доступні, автоматичне підтвердження вимкнене",green,()->showNoAutomation("Автоприйняття замовлень вимкнене. Перевір пропозицію і підтверди її вручну в Bolt."));
         Button done=button("Готово",green,Color.rgb(12,35,19));page.addView(done,lp(0,12,0,0));done.setOnClickListener(v->finish());
         setContentView(scroll);
     }
@@ -65,8 +93,8 @@ public class PermissionSetupActivity extends Activity {
     }
 
     private void refreshStatuses(){for(CardRef r:cards){boolean ok=isEnabled(r.kind);r.button.setText(labelFor(r.kind,ok));if(ok)r.button.setTextColor(Color.rgb(28,94,42));}}
-    private String labelFor(int kind,boolean ok){switch(kind){case ACCESSIBILITY:return ok?"Увімкнено":"Увімкнути";case RESET:return "Перевірити";case BATTERY:return ok?"Без обмежень":"Батарея";case OVERLAY:return ok?"Увімкнено":"Дозвіл";case NOTIFICATIONS:return ok?"Дозволено":"Дозвіл";case LOCATION:return ok?"Дозволено":"Дозвіл";case LISTENER:return ok?"Увімкнено":"Дозвіл";case AUTOSTART:return "Автозапуск";default:return "Відкрити";}}
-    private boolean isEnabled(int kind){switch(kind){case ACCESSIBILITY:return isAccessibilityEnabled();case BATTERY:return isBatteryUnrestricted();case OVERLAY:return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);case NOTIFICATIONS:return Build.VERSION.SDK_INT<33||hasPermission(Manifest.permission.POST_NOTIFICATIONS);case LOCATION:return hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)||hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION);case LISTENER:return isNotificationListenerEnabled();default:return false;}}
+    private String labelFor(int kind,boolean ok){switch(kind){case ACCESSIBILITY:return ok?"Увімкнено":"Увімкнути";case RESET:return "Перевірити";case BATTERY:return ok?"Без обмежень":"Батарея";case OVERLAY:return ok?"Увімкнено":"Дозвіл";case NOTIFICATIONS:return ok?"Дозволено":"Дозвіл";case LOCATION:return ok?"Дозволено":"Дозвіл";case LISTENER:return ok?"Увімкнено":"Дозвіл";case AUTOSTART:return "Автозапуск";case 10:return ok?"Пауза":"Увімкнути";case 13:return features().getBoolean("sound_enabled",false)?"Звук увімкнено":"Звук вимкнено";default:return "Відкрити";}}
+    private boolean isEnabled(int kind){switch(kind){case ACCESSIBILITY:return isAccessibilityEnabled();case BATTERY:return isBatteryUnrestricted();case OVERLAY:return Build.VERSION.SDK_INT<23||Settings.canDrawOverlays(this);case NOTIFICATIONS:return Build.VERSION.SDK_INT<33||hasPermission(Manifest.permission.POST_NOTIFICATIONS);case LOCATION:return hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)||hasPermission(Manifest.permission.ACCESS_COARSE_LOCATION);case LISTENER:return isNotificationListenerEnabled();case 10:return getSharedPreferences("taxiscan_features",MODE_PRIVATE).getBoolean("scanning_enabled",true);default:return false;}}
 
     private boolean isAccessibilityEnabled(){String enabled=Settings.Secure.getString(getContentResolver(),Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);if(enabled==null)return false;String wanted=new ComponentName(this,TaxiScanAccessibilityService.class).flattenToString();for(String item:enabled.split(":"))if(item.equalsIgnoreCase(wanted)||item.equalsIgnoreCase(new ComponentName(this,TaxiScanAccessibilityService.class).flattenToShortString()))return true;return false;}
     private boolean isNotificationListenerEnabled(){String enabled=Settings.Secure.getString(getContentResolver(),"enabled_notification_listeners");if(enabled==null)return false;String wanted=new ComponentName(this,TaxiScanNotificationListener.class).flattenToString();for(String item:enabled.split(":"))if(item.equalsIgnoreCase(wanted))return true;return false;}
@@ -85,6 +113,45 @@ public class PermissionSetupActivity extends Activity {
     }
     private void openAppDetails(){openSettings(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName())));}
     private void openSettings(Intent intent){try{if(intent.resolveActivity(getPackageManager())!=null)startActivity(intent);else openAppDetails();}catch(Exception ex){try{startActivity(new Intent(Settings.ACTION_SETTINGS));}catch(Exception ignored){Toast.makeText(this,"Не вдалося відкрити системні налаштування",Toast.LENGTH_SHORT).show();}}}
+
+    private android.content.SharedPreferences features(){return getSharedPreferences("taxiscan_features",MODE_PRIVATE);}
+    private void toggleScanning(){boolean next=!features().getBoolean("scanning_enabled",true);features().edit().putBoolean("scanning_enabled",next).apply();if(!next)OfferOverlay.hide();LocalEventLog.add(this,next?"Аналіз увімкнено":"Аналіз призупинено");refreshStatuses();Toast.makeText(this,next?"Аналіз пропозицій увімкнено":"Аналіз призупинено",Toast.LENGTH_SHORT).show();}
+    private EditText field(String hint,String value){EditText e=new EditText(this);e.setSingleLine(true);e.setHint(hint);e.setText(value);e.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.TYPE_NUMBER_FLAG_DECIMAL);return e;}
+    private LinearLayout form(){LinearLayout l=new LinearLayout(this);l.setPadding(dp(20),dp(4),dp(20),0);l.setOrientation(LinearLayout.VERTICAL);return l;}
+    private void editOfferFilter(){
+        android.content.SharedPreferences p=features();LinearLayout f=form();EditText fare=field("Мінімальна сума, ₴",p.getString("filter_min_fare","80"));EditText rate=field("Мінімальна ціна, ₴/км",p.getString("filter_min_rate","8"));EditText distance=field("Максимальна відстань, км",p.getString("filter_max_km","40"));
+        f.addView(fare);f.addView(rate);f.addView(distance);new AlertDialog.Builder(this).setTitle("Фільтр пропозицій").setMessage("TaxiScan позначає відповідність умовам. Рішення та прийняття залишаються за водієм.").setView(f).setNegativeButton("Скасувати",null).setPositiveButton("Зберегти",(d,w)->{p.edit().putString("filter_min_fare",fare.getText().toString()).putString("filter_min_rate",rate.getText().toString()).putString("filter_max_km",distance.getText().toString()).apply();LocalEventLog.add(this,"Фільтр пропозицій оновлено");Toast.makeText(this,"Фільтр збережено",Toast.LENGTH_SHORT).show();}).show();
+    }
+    private void editVehicleCosts(){
+        android.content.SharedPreferences p=getSharedPreferences("taxiscan_local",MODE_PRIVATE);LinearLayout f=form();EditText use=field("Витрата пального, л/100 км",p.getString("fuelUse","8"));EditText price=field("Ціна пального, ₴/л",p.getString("fuelPrice","95"));EditText wear=field("Амортизація, ₴/км",p.getString("wear","1.50"));f.addView(use);f.addView(price);f.addView(wear);
+        new AlertDialog.Builder(this).setTitle("Ціна 1 км авто").setView(f).setNegativeButton("Скасувати",null).setPositiveButton("Зберегти",(d,w)->{p.edit().putString("fuelUse",use.getText().toString()).putString("fuelPrice",price.getText().toString()).putString("wear",wear.getText().toString()).apply();double cost=safe(use.getText().toString(),8)*safe(price.getText().toString(),95)/100.0+safe(wear.getText().toString(),1.5);Toast.makeText(this,String.format(java.util.Locale.getDefault(),"Собівартість: %.2f ₴/км + комісія",cost),Toast.LENGTH_LONG).show();LocalEventLog.add(this,"Витрати авто оновлено");}).show();
+    }
+    private double safe(String s,double d){try{return Double.parseDouble(s.trim().replace(',','.'));}catch(Exception ignored){return d;}}
+    private void toggleSound(){boolean next=!features().getBoolean("sound_enabled",false);features().edit().putBoolean("sound_enabled",next).apply();LocalEventLog.add(this,next?"Звуковий сигнал увімкнено":"Звуковий сигнал вимкнено");refreshStatuses();Toast.makeText(this,next?"Сигнал нової пропозиції увімкнено":"Сигнал вимкнено",Toast.LENGTH_SHORT).show();}
+    private void showInfo(){
+        JSONArray trips=new JSONArray(getSharedPreferences("taxiscan_local",MODE_PRIVATE).getString("trips","[]"));int today=0;long day=System.currentTimeMillis()/86400000L;double net=0;
+        for(int i=0;i<trips.length();i++){JSONObject x=trips.optJSONObject(i);if(x!=null&&x.optLong("time",0)/86400000L==day){today++;net+=x.optDouble("net",0);}}
+        String s="Версія 2.2.0\nЗбережено поїздок: "+trips.length()+"\nСьогодні: "+today+" · чистими ₴ "+String.format(java.util.Locale.getDefault(),"%.2f",net)+"\n\nОбробка пропозицій відбувається на пристрої. Текст замовлень не додається до логів.";
+        new AlertDialog.Builder(this).setTitle("TaxiScan · інформація").setMessage(s).setPositiveButton("Готово",null).setNeutralButton("Відкрити калькулятор",(d,w)->finish()).show();
+    }
+    private void editOverlay(){
+        android.content.SharedPreferences p=features();LinearLayout f=form();EditText size=field("Розмір тексту (11–22)",String.valueOf(p.getInt("overlay_text_size",15)));EditText y=field("Відступ згори в dp (40–220)",String.valueOf(p.getInt("overlay_y",70)));EditText opacity=field("Прозорість (100–255)",String.valueOf(p.getInt("overlay_opacity",235)));f.addView(size);f.addView(y);f.addView(opacity);
+        new AlertDialog.Builder(this).setTitle("Плаваюча картка").setView(f).setNegativeButton("Скасувати",null).setPositiveButton("Зберегти",(d,w)->{p.edit().putInt("overlay_text_size",(int)bound(safe(size.getText().toString(),15),11,22)).putInt("overlay_y",(int)bound(safe(y.getText().toString(),70),40,220)).putInt("overlay_opacity",(int)bound(safe(opacity.getText().toString(),235),100,255)).apply();OfferOverlay.hide();Toast.makeText(this,"Параметри картки збережено",Toast.LENGTH_SHORT).show();LocalEventLog.add(this,"Плаваюче вікно налаштовано");}).show();
+    }
+    private double bound(double v,double min,double max){return Math.max(min,Math.min(max,v));}
+    private void showTimers(){String[] names={"Прийняв замовлення","Зустріч із пасажиром","Очікування","Загальний час"};new AlertDialog.Builder(this).setTitle("Таймер поїздки").setItems(names,(d,which)->startTimer(names[which])).setNegativeButton("Закрити",null).show();}
+    private void startTimer(String label){EditText minutes=field("Тривалість, хв",label.equals("Зустріч із пасажиром")?"5":"30");new AlertDialog.Builder(this).setTitle(label).setMessage("Таймер лише нагадує про час, він не керує Bolt/Uklon.").setView(minutes).setNegativeButton("Скасувати",null).setPositiveButton("Старт",(d,w)->{if(activeTimer!=null)activeTimer.cancel();long ms=(long)bound(safe(minutes.getText().toString(),30),1,600)*60000L;LocalEventLog.add(this,"Запущено таймер: "+label);activeTimer=new CountDownTimer(ms,1000){public void onTick(long left){} public void onFinish(){LocalEventLog.add(PermissionSetupActivity.this,"Таймер завершився: "+label);Toast.makeText(PermissionSetupActivity.this,"Таймер завершився: "+label,Toast.LENGTH_LONG).show();}}.start();Toast.makeText(this,"Таймер запущено",Toast.LENGTH_SHORT).show();}).show();}
+    private void showBackup(){new AlertDialog.Builder(this).setTitle("Резервна копія").setMessage("Експортуються локальні налаштування калькулятора, фільтра та картки. Історію поїздок і вміст замовлень не експортуємо.").setPositiveButton("Зберегти файл",(d,w)->{Intent i=new Intent(Intent.ACTION_CREATE_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");i.putExtra(Intent.EXTRA_TITLE,"TaxiScan_settings_backup.json");startActivityForResult(i,EXPORT_BACKUP);}).setNeutralButton("Відновити",(d,w)->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("application/json");startActivityForResult(i,IMPORT_BACKUP);}).setNegativeButton("Закрити",null).show();}
+    private JSONObject backupJson(){JSONObject root=new JSONObject();try{root.put("schema",1);root.put("local",prefsJson(getSharedPreferences("taxiscan_local",MODE_PRIVATE).getAll()));root.put("features",prefsJson(features().getAll()));}catch(Exception ignored){}return root;}
+    private JSONObject prefsJson(Map<String,?> values){JSONObject j=new JSONObject();for(Map.Entry<String,?> e:values.entrySet()){try{Object v=e.getValue();if(v instanceof String||v instanceof Number||v instanceof Boolean)j.put(e.getKey(),v);}catch(Exception ignored){}}return j;}
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;try{if(requestCode==EXPORT_BACKUP){OutputStream out=getContentResolver().openOutputStream(data.getData());if(out!=null){out.write(backupJson().toString(2).getBytes(StandardCharsets.UTF_8));out.close();Toast.makeText(this,"Резервну копію збережено",Toast.LENGTH_LONG).show();}}else if(requestCode==IMPORT_BACKUP){String json=readUri(data.getData());JSONObject root=new JSONObject(json);if(root.optInt("schema")!=1)throw new IllegalArgumentException("Непідтримуваний формат файлу");restorePrefs("taxiscan_local",root.optJSONObject("local"));restorePrefs("taxiscan_features",root.optJSONObject("features"));Toast.makeText(this,"Налаштування відновлено",Toast.LENGTH_LONG).show();refreshStatuses();}}catch(Exception e){Toast.makeText(this,"Не вдалося обробити файл резервної копії",Toast.LENGTH_LONG).show();}}
+    private String readUri(Uri uri)throws Exception{java.io.InputStream in=getContentResolver().openInputStream(uri);if(in==null)throw new IllegalArgumentException("Файл недоступний");java.io.ByteArrayOutputStream b=new java.io.ByteArrayOutputStream();byte[] buf=new byte[4096];int n;while((n=in.read(buf))>0)b.write(buf,0,n);in.close();return new String(b.toByteArray(),StandardCharsets.UTF_8);}
+    private void restorePrefs(String name,JSONObject values){if(values==null)return;android.content.SharedPreferences.Editor e=getSharedPreferences(name,MODE_PRIVATE).edit();e.clear();java.util.Iterator<String> keys=values.keys();while(keys.hasNext()){String k=keys.next();Object v=values.opt(k);if(v instanceof String)e.putString(k,(String)v);else if(v instanceof Boolean)e.putBoolean(k,(Boolean)v);else if(v instanceof Integer)e.putInt(k,(Integer)v);else if(v instanceof Number)e.putFloat(k,((Number)v).floatValue());}e.apply();}
+    private void openUpdates(){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/romanstars/TaxiScan-Android33/releases")));}catch(Exception e){Toast.makeText(this,"Сторінка оновлень недоступна",Toast.LENGTH_SHORT).show();}}
+    private void showTripForecast(){LinearLayout f=form();EditText km=field("Відстань, км","10");EditText speed=field("Середня швидкість, км/год","25");EditText delay=field("Запас на затори, хв","10");f.addView(km);f.addView(speed);f.addView(delay);new AlertDialog.Builder(this).setTitle("Прогноз часу поїздки").setMessage("Оцінка на телефоні за відстанню, швидкістю та вашим запасом на затори. Для онлайн-прогнозу потрібен окремо налаштований API.").setView(f).setNegativeButton("Закрити",null).setPositiveButton("Порахувати",(d,w)->{double minutes=safe(km.getText().toString(),0)/Math.max(1,safe(speed.getText().toString(),25))*60+safe(delay.getText().toString(),10);Toast.makeText(this,String.format(java.util.Locale.getDefault(),"Орієнтовно %.0f хв",minutes),Toast.LENGTH_LONG).show();}).show();}
+    private void launchBolt(){Intent i=getPackageManager().getLaunchIntentForPackage("ee.mtakso.driver");if(i==null){Toast.makeText(this,"Bolt Driver не знайдено. Встанови його та спробуй ще раз.",Toast.LENGTH_LONG).show();return;}try{startActivity(i);}catch(Exception e){Toast.makeText(this,"Не вдалося відкрити Bolt Driver",Toast.LENGTH_SHORT).show();}}
+    private void showLogs(){JSONArray logs=LocalEventLog.get(this);StringBuilder b=new StringBuilder();for(int i=0;i<logs.length();i++)b.append(logs.optString(i)).append('\n');if(logs.length()==0)b.append("Подій ще немає.");new AlertDialog.Builder(this).setTitle("Логи TaxiScan").setMessage(b.toString()).setPositiveButton("Готово",null).setNeutralButton("Очистити",(d,w)->{LocalEventLog.clear(this);Toast.makeText(this,"Локальні логи очищено",Toast.LENGTH_SHORT).show();}).show();}
+    private void showNoAutomation(String text){new AlertDialog.Builder(this).setTitle("Ручне підтвердження").setMessage(text).setPositiveButton("Зрозуміло",null).show();}
 
     private LinearLayout panel(boolean vertical){LinearLayout l=new LinearLayout(this);l.setOrientation(vertical?LinearLayout.VERTICAL:LinearLayout.VERTICAL);l.setPadding(dp(12),dp(12),dp(12),dp(12));l.setBackground(round(card,dp(15),green,dp(1)));return l;}
     private Button button(String title,int color,int textColor){Button b=new Button(this);b.setText(title);b.setTextColor(textColor);b.setTextSize(14);b.setTypeface(Typeface.DEFAULT,Typeface.BOLD);b.setAllCaps(false);b.setPadding(dp(4),0,dp(4),0);b.setBackground(round(color,dp(5),Color.TRANSPARENT,0));return b;}

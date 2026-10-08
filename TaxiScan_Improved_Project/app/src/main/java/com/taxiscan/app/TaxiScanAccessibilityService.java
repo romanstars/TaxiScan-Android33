@@ -21,6 +21,7 @@ public class TaxiScanAccessibilityService extends AccessibilityService {
 
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null || event.getPackageName() == null) { OfferOverlay.hide(); return; }
+        if(!getSharedPreferences("taxiscan_features",MODE_PRIVATE).getBoolean("scanning_enabled",true)){OfferOverlay.hide();return;}
         String pkg = event.getPackageName().toString().toLowerCase(Locale.ROOT);
         if (!pkg.equals("ee.mtakso.driver") && !pkg.equals("ua.com.uklon.uklondriver")) { OfferOverlay.hide(); return; }
         StringBuilder visible = new StringBuilder();
@@ -28,7 +29,7 @@ public class TaxiScanAccessibilityService extends AccessibilityService {
         AccessibilityNodeInfo root = getRootInActiveWindow();
         if (root != null) { collectVisibleText(root, visible, 0); root.recycle(); }
         String summary = OfferParser.summarize(visible);
-        if (summary != null) OfferOverlay.show(this, summary); else OfferOverlay.hide();
+        if (summary != null) {summary=OfferParser.withFilter(this,summary);OfferFeedback.onOffer(this,summary);OfferOverlay.show(this, summary);} else OfferOverlay.hide();
     }
 
     private void collectVisibleText(AccessibilityNodeInfo node, StringBuilder out, int depth) {
