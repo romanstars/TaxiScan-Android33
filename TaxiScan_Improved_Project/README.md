@@ -28,6 +28,6 @@ The offer parser uses fare and kilometre labels it can find in visible app text.
 
 Open this folder in Android Studio. Use JDK 17, Gradle 8.13, Android Gradle Plugin 8.13.2, and Android SDK Platform 36.
 
-The application ID is retained as `com.example.myno.activity` so existing installs keep the same app identity. Version code is 35 and version name is 2.2.1. Updating an existing installation or publishing requires the original authorized upload key, which is not included here. The provided APK is debug-signed for testing and is not a Play Store release build.
+The new-install package ID is `com.romanstars.taxianalytic`. It installs as a separate app beside older TaxiScan builds; Android keeps the old app and its local data, but this new app does not import that data. Version code is 35 and version name is 2.2.1. The provided APK is debug-signed for testing and is not a Play Store release build.
 
 To connect the apps, open TaxiAnalytic → **Підключення платформ**, then enable Accessibility and overlay access in Android settings. Notification access is optional. Battery and autostart controls differ by device maker and may need manual adjustment.

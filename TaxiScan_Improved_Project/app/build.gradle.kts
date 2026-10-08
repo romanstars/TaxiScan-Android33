@@ -4,7 +4,7 @@ android {
     namespace = "com.taxiscan.app"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.myno.activity"
+        applicationId = "com.romanstars.taxianalytic"
         minSdk = 21
         targetSdk = 36
         versionCode = 35
