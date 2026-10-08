@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:allowBackup="true"
-        android:label="TaxiScan"
+        android:label="TaxiAnalytic"
         android:theme="@style/AppTheme"
         android:supportsRtl="true">
         <activity android:name="com.taxiscan.app.MainActivity" android:exported="true">
@@ -17,7 +17,7 @@
         <activity android:name="com.taxiscan.app.PermissionSetupActivity" android:exported="false" />
         <service
             android:name="com.taxiscan.app.TaxiScanAccessibilityService"
-            android:label="TaxiScan: аналіз пропозицій"
+            android:label="TaxiAnalytic: аналіз пропозицій"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true">
             <intent-filter><action android:name="android.accessibilityservice.AccessibilityService" /></intent-filter>
@@ -25,7 +25,7 @@
         </service>
         <service
             android:name="com.taxiscan.app.TaxiScanNotificationListener"
-            android:label="TaxiScan: сповіщення Bolt/Uklon"
+            android:label="TaxiAnalytic: сповіщення Bolt/Uklon"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>

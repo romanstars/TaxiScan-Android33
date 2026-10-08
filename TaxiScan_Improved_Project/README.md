@@ -1,6 +1,10 @@
-# TaxiScan 2.2.0
+# TaxiAnalytic 2.2.1
 
 A clean Android Studio rebuild based on the calculator behavior documented from the TaxiScan 1.7.6 APK. The original APK did not contain the original Kotlin/Java source, so this project is a rebuild rather than recovered source.
+
+## Design refresh and rebrand
+
+The dashboard and permissions hub use a graphite background with green and yellow accents, rounded cards, and clearer visual grouping. This refresh changes presentation only: trip calculations, settings, permission actions, local history, and offer-scanning behavior keep their existing handlers and data.
 
 ## Features
 
@@ -24,6 +28,6 @@ The offer parser uses fare and kilometre labels it can find in visible app text.
 
 Open this folder in Android Studio. Use JDK 17, Gradle 8.13, Android Gradle Plugin 8.13.2, and Android SDK Platform 36.
 
-The application ID is retained from the recovered APK (`com.example.myno.activity`). Version code is 34 and version name is 2.2.0. Updating an existing installation or publishing requires the original authorized upload key, which is not included here. The provided APK is debug-signed for testing and is not a Play Store release build.
+The application ID is retained as `com.example.myno.activity` so existing installs keep the same app identity. Version code is 35 and version name is 2.2.1. Updating an existing installation or publishing requires the original authorized upload key, which is not included here. The provided APK is debug-signed for testing and is not a Play Store release build.
 
-To connect the apps, open TaxiScan → **Підключити Bolt / Uklon**, then enable Accessibility and overlay access in Android settings. Notification access is optional. Battery and autostart controls differ by device maker and may need manual adjustment.
+To connect the apps, open TaxiAnalytic → **Підключення платформ**, then enable Accessibility and overlay access in Android settings. Notification access is optional. Battery and autostart controls differ by device maker and may need manual adjustment.

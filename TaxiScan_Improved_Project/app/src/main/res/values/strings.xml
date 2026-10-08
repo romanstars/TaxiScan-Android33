@@ -1,3 +1,3 @@
 <resources>
-    <string name="accessibility_service_description">Після вашого дозволу TaxiScan читає видимі пропозиції лише у Bolt та Uklon для розрахунку вартості поїздки. Сервіс не натискає кнопки і не приймає замовлення.</string>
+    <string name="accessibility_service_description">Після вашого дозволу TaxiAnalytic читає видимі пропозиції лише у Bolt та Uklon для розрахунку вартості поїздки. Сервіс не натискає кнопки і не приймає замовлення.</string>
 </resources>
